@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>YouTube Style Video Player</title>
+
+<style>
+:root {
+  --bg: #0f0f0f;
+  --control-bg: rgba(0,0,0,.6);
+  --accent: #ff0000;
+  --text: #fff;
+}
+
+body {
+  background: var(--bg);
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+.player {
+  width: 900px;
+  max-width: 95%;
+  position: relative;
+  background: black;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+video {
+  width: 100%;
+  display: block;
+  cursor: pointer;
+}
+
+/* Controls */
+.controls {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: linear-gradient(to top, rgba(0,0,0,.8), transparent);
+  padding: 10px;
+  opacity: 0;
+  transition: opacity .3s;
+}
+
+.player:hover .controls {
+  opacity: 1;
+}
+
+.progress {
+  width: 100%;
+  height: 5px;
+  background: #333;
+  cursor: pointer;
+}
+
+.progress-filled {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+button {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.time {
+  font-size: 13px;
+  color: #ddd;
+}
+
+.volume {
+  width: 80px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="player" id="player">
+
+  <!-- Laravel dynamic source -->
+  <video id="video" poster="d.png">
+    <source src="long.mp4" type="video/mp4">
+    <!-- Blade example -->
+    <!-- <source src="{{ asset('storage/'.$video->path) }}" type="video/mp4"> -->
+  </video>
+
+  <div class="controls">
+
+    <div class="progress" id="progress">
+      <div class="progress-filled" id="progressFilled"></div>
+    </div>
+
+    <div class="control-row">
+      <button id="play">▶</button>
+      <button id="mute">🔊</button>
+      <input type="range" id="volume" class="volume" min="0" max="1" step="0.05" value="1">
+      <span class="time" id="time">0:00 / 0:00</span>
+      <button id="fullscreen">⛶</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const video = document.getElementById('video');
+const playBtn = document.getElementById('play');
+const muteBtn = document.getElementById('mute');
+const volume = document.getElementById('volume');
+const progress = document.getElementById('progress');
+const progressFilled = document.getElementById('progressFilled');
+const time = document.getElementById('time');
+const fullscreen = document.getElementById('fullscreen');
+
+/* Play / Pause */
+function togglePlay() {
+  video.paused ? video.play() : video.pause();
+}
+
+video.addEventListener('click', togglePlay);
+playBtn.addEventListener('click', togglePlay);
+
+video.addEventListener('play', () => playBtn.textContent = '⏸');
+video.addEventListener('pause', () => playBtn.textContent = '▶');
+
+/* Progress */
+video.addEventListener('timeupdate', () => {
+  const percent = (video.currentTime / video.duration) * 100;
+  progressFilled.style.width = percent + '%';
+
+  time.textContent = `${format(video.currentTime)} / ${format(video.duration)}`;
+});
+
+progress.addEventListener('click', e => {
+  const pos = (e.offsetX / progress.offsetWidth) * video.duration;
+  video.currentTime = pos;
+});
+
+/* Volume */
+volume.addEventListener('input', () => {
+  video.volume = volume.value;
+  muteBtn.textContent = video.volume === 0 ? '🔇' : '🔊';
+});
+
+muteBtn.addEventListener('click', () => {
+  video.muted = !video.muted;
+  muteBtn.textContent = video.muted ? '🔇' : '🔊';
+});
+
+/* Fullscreen */
+fullscreen.addEventListener('click', () => {
+  video.requestFullscreen();
+});
+
+/* Keyboard shortcuts (YouTube-like) */
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') togglePlay();
+  if (e.code === 'ArrowRight') video.currentTime += 5;
+  if (e.code === 'ArrowLeft') video.currentTime -= 5;
+});
+
+function format(sec) {
+  if (!sec) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+</script>
+
+</body>
+</html>
